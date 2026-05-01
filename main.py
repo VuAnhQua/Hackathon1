@@ -5,60 +5,16 @@ import yfinance as yf
 
 app = FastAPI()
 
-# -----------------------------
-# Models
-# -----------------------------
+
 class PortfolioItem(BaseModel):
     ticker: str
     amount: float
+
 
 class PortfolioRequest(BaseModel):
     portfolio: List[PortfolioItem]
 
 
-# -----------------------------
-# Stock Class (merged logic)
-# -----------------------------
-class Stock:
-    def __init__(self, listOfStock: list, listOfStuffToGet: list):
-        self.listOfStock = listOfStock
-        self.listOfStuffToGet = listOfStuffToGet
-
-    def get_data(self, with_news: bool = False):
-        results = []
-
-        for symbol in self.listOfStock:
-            ticker = yf.Ticker(symbol)
-            data = ticker.info
-
-            stock_data = {}
-            for field in self.listOfStuffToGet:
-                stock_data[field] = data.get(field, "N/A")
-
-            stock_result = {
-                "ticker": symbol,
-                "data": stock_data
-            }
-
-            # Optional news
-            if with_news:
-                stock_result["news"] = [
-                    {
-                        "summary": n.get("content", {}).get("summary", ""),
-                        "date": n.get("content", {}).get("pubDate", ""),
-                        "link": n.get("content", {}).get("canonicalUrl", {}).get("url", "")
-                    }
-                    for n in ticker.news
-                ]
-
-            results.append(stock_result)
-
-        return results
-
-
-# -----------------------------
-# API Routes
-# -----------------------------
 @app.get("/")
 def home():
     return {"message": "Backend is running"}
@@ -66,70 +22,96 @@ def home():
 
 @app.get("/stocks")
 def get_stocks():
-    stock_obj = Stock(
-        ["MSFT", "AAPL"],
-        [
-            "dividendRate",
-            "dividendYield",
-            "country",
-            "industry",
-            "dayHigh",
-            "dayLow",
-            "open",
-            "previousClose",
-            "volume",
-            "currentPrice",
-            "targetHighPrice",
-            "targetLowPrice",
-            "recommendationKey",
-            "fiftyTwoWeekRange",
-            "displayName"
-        ]
-    )
+    list_of_stock = ["MSFT", "AAPL"]
 
-    return stock_obj.get_data(with_news=False)
+    fields_to_get = [
+        "dividendRate",
+        "dividendYield",
+        "country",
+        "industry",
+        "dayHigh",
+        "dayLow",
+        "open",
+        "previousClose",
+        "volume",
+        "currentPrice",
+        "targetHighPrice",
+        "targetLowPrice",
+        "recommendationKey",
+        "fiftyTwoWeekRange",
+        "displayName"
+    ]
+
+    results = []
+
+    for stock_symbol in list_of_stock:
+        ticker = yf.Ticker(stock_symbol)
+        data = ticker.info
+
+        stock_data = {}
+
+        for field in fields_to_get:
+            stock_data[field] = data.get(field, "N/A")
+
+        results.append({
+            "ticker": stock_symbol,
+            "data": stock_data
+        })
+
+    return results
 
 
 @app.post("/analyze")
 def analyze_portfolio(request: PortfolioRequest):
     results = []
 
-    total_value = 0
-
     for item in request.portfolio:
         ticker = yf.Ticker(item.ticker)
         data = ticker.info
 
-        price = data.get("currentPrice", 0)
-        total_value += price * item.amount
+        sector = data.get("sector", "Unknown")
 
         results.append({
             "ticker": item.ticker.upper(),
             "amount": item.amount,
-            "price": price,
-            "sector": data.get("sector", "Unknown"),
-            "company_name": data.get("displayName", item.ticker.upper()),
-            "value": price * item.amount
+            "price": data.get("currentPrice", 0),
+            "sector": sector,
+            "company_name": data.get("displayName", item.ticker.upper())
         })
+
+    total_value = sum(item.amount for item in request.portfolio)
+
+    sector_totals = {}
+
+    for stock in results:
+        sector = stock["sector"]
+        amount = stock["amount"]
+
+        if sector not in sector_totals:
+            sector_totals[sector] = 0
+
+        sector_totals[sector] += amount
+
+    sector_allocation = {}
+
+    for sector, amount in sector_totals.items():
+        sector_allocation[sector] = round((amount / total_value) * 100, 2)
+
+    highest_sector_percentage = max(sector_allocation.values())
+
+    if highest_sector_percentage >= 60:
+        risk_level = "High"
+    elif highest_sector_percentage >= 40:
+        risk_level = "Medium"
+    else:
+        risk_level = "Low"
+
+    diversification_score = round(100 - highest_sector_percentage, 2)
 
     return {
         "total_value": total_value,
-        "portfolio": results
+        "portfolio": results,
+        "sector_allocation": sector_allocation,
+        "risk_level": risk_level,
+        "diversification_score": diversification_score
     }
-
-
-# -----------------------------
-# Optional standalone usage (like your original script)
-# -----------------------------
-if __name__ == "__main__":
-    obj1 = Stock(
-        ["MSFT", "AAPL"],
-        ["dividendRate", "currentPrice", "industry"]
-    )
-    print(obj1.get_data(with_news=False))
-
-    obj2 = Stock(
-        ["AAPL"],
-        ["currentPrice"]
-    )
-    print(obj2.get_data(with_news=False))
