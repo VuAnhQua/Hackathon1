@@ -1,20 +1,48 @@
+from fastapi import FastAPI
 import yfinance as yf
 
-listOfStock = {"MSFT", "AAPL"}
-listOfStuffToGet = {"dividendRate", "dividendYield", "country", "industry", "dayHigh", "dayLow", "open", "previousClose", "volume", "allTimeHigh", "currentPrice", "targetHighPrice", "targetLowPrice", "recommendationKey", "fiftyTwoWeekRange", "displayName"}
-for x in listOfStock:
-    ticker = yf.Ticker(x)
-    data = ticker.info
-    news = ticker.news
-    tempStr = ""
-    # Get all data in listOfStuffToGet (Can add more)
-    for y in listOfStuffToGet:
-        tempStr += y + ": " + str(data[y])
-        tempStr += "\n"
-    print("Stock: " + x + "\n" + tempStr + "\n")
-    # Get all news
-    for y in news:
-        print("Summary: "+ str(y["content"]["summary"]) + "\nDate: " + str(y["content"]["pubDate"]) + "\nLink:" + str(y["content"]["canonicalUrl"]["url"]))
+app = FastAPI()
 
+@app.get("/")
+def home():
+    return {"message": "Backend is running"}
 
-# print(msft.financials)
+@app.get("/stocks")
+def get_stocks():
+    list_of_stock = ["MSFT", "AAPL"]
+
+    fields_to_get = [
+        "dividendRate",
+        "dividendYield",
+        "country",
+        "industry",
+        "dayHigh",
+        "dayLow",
+        "open",
+        "previousClose",
+        "volume",
+        "currentPrice",
+        "targetHighPrice",
+        "targetLowPrice",
+        "recommendationKey",
+        "fiftyTwoWeekRange",
+        "displayName"
+    ]
+
+    results = []
+
+    for stock_symbol in list_of_stock:
+        ticker = yf.Ticker(stock_symbol)
+        data = ticker.info
+
+        stock_data = {}
+
+        for field in fields_to_get:
+            stock_data[field] = data.get(field, "N/A")
+
+        results.append({
+            "ticker": stock_symbol,
+            "data": stock_data
+        })
+
+    return results
