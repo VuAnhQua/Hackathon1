@@ -1,34 +1,20 @@
-from fastapi import FastAPI
 import yfinance as yf
 
-app = FastAPI()
+listOfStock = {"MSFT", "AAPL"}
+listOfStuffToGet = {"dividendRate", "dividendYield", "country", "industry", "dayHigh", "dayLow", "open", "previousClose", "volume", "allTimeHigh", "currentPrice", "targetHighPrice", "targetLowPrice", "recommendationKey", "fiftyTwoWeekRange", "displayName"}
+for x in listOfStock:
+    ticker = yf.Ticker(x)
+    data = ticker.info
+    news = ticker.news
+    tempStr = ""
+    # Get all data in listOfStuffToGet (Can add more)
+    for y in listOfStuffToGet:
+        tempStr += y + ": " + str(data[y])
+        tempStr += "\n"
+    print("Stock: " + x + "\n" + tempStr + "\n")
+    # Get all news
+    for y in news:
+        print("Summary: "+ str(y["content"]["summary"]) + "\nDate: " + str(y["content"]["pubDate"]) + "\nLink:" + str(y["content"]["canonicalUrl"]["url"]))
 
-@app.get("/stocks")
-def get_stocks():
-    listOfStock = ["MSFT", "AAPL"]
 
-    listOfStuffToGet = [
-        "dividendRate", "dividendYield", "country", "industry",
-        "dayHigh", "dayLow", "open", "previousClose", "volume",
-        "currentPrice", "targetHighPrice", "targetLowPrice",
-        "recommendationKey", "fiftyTwoWeekRange", "displayName"
-    ]
-
-    result = []
-
-    for x in listOfStock:
-        ticker = yf.Ticker(x)
-        data = ticker.info
-
-        stock_data = {}
-
-        for y in listOfStuffToGet:
-            stock_data[y] = data.get(y, "N/A")
-
-        result.append({
-            "ticker": x,
-            "data": stock_data,
-            "news": ticker.news
-        })
-
-    return result
+# print(msft.financials)
