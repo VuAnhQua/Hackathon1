@@ -1,7 +1,16 @@
 from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import List
 import yfinance as yf
 
 app = FastAPI()
+
+class PortfolioItem(BaseModel):
+    ticker: str
+    amount: float
+
+class PortfolioRequest(BaseModel):
+    portfolio: List[PortfolioItem]
 
 @app.get("/")
 def home():
@@ -46,3 +55,26 @@ def get_stocks():
         })
 
     return results
+
+@app.post("/analyze")
+def analyze_portfolio(request: PortfolioRequest):
+    results = []
+
+    for item in request.portfolio:
+        ticker = yf.Ticker(item.ticker)
+        data = ticker.info
+
+        results.append({
+            "ticker": item.ticker.upper(),
+            "amount": item.amount,
+            "price": data.get("currentPrice", 0),
+            "sector": data.get("sector", "Unknown"),
+            "company_name": data.get("displayName", item.ticker.upper())
+        })
+
+    total_value = sum(item.amount for item in request.portfolio)
+
+    return {
+        "total_value": total_value,
+        "portfolio": results
+    }
