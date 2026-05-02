@@ -4,6 +4,7 @@ from models import PortfolioRequest
 from market import get_stock_data
 from risk import calculate_risk
 from ai import generate_ai_summary
+from sentiment import get_news_sentiment
 
 app = FastAPI()
 
@@ -33,3 +34,7 @@ def analyze_portfolio(request: PortfolioRequest):
         "risk": risk_result,
         "ai_summary": ai_summary
     }
+
+@app.get("/sentiment/{ticker}")
+def sentiment_for_ticker(ticker: str):
+    return get_news_sentiment(ticker)
