@@ -20,14 +20,19 @@ def analyze_portfolio(request: PortfolioRequest):
 
     for item in request.portfolio:
         stock_data = get_stock_data(item.ticker, item.amount)
+
+        sentiment_data = get_news_sentiment(item.ticker)
+
+        stock_data["sentiment"] = sentiment_data
+
         portfolio_results.append(stock_data)
 
     risk_result = calculate_risk(portfolio_results)
 
     try:
         ai_summary = generate_ai_summary(portfolio_results, risk_result)
-    except Exception as e:
-        ai_summary = "AI temporarily unavailable due to API limits."
+    except Exception:
+        ai_summary = "AI temporarily unavailable."
 
     return {
         "portfolio": portfolio_results,
