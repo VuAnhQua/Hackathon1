@@ -115,3 +115,20 @@ def analyze_portfolio(request: PortfolioRequest):
         "risk_level": risk_level,
         "diversification_score": diversification_score
     }
+
+    {
+  "portfolio": [
+    {
+      "ticker": "AAPL",
+      "amount": 2000
+    },
+    {
+      "ticker": "NVDA",
+      "amount": 3000
+    },
+    {
+      "ticker": "VOO",
+      "amount": 5000
+    }
+  ]
+}
