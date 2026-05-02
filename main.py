@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from models import PortfolioRequest
 from market import get_stock_data
 from risk import calculate_risk
-from ai import generate_ai_summary
+from ai import generate_ai_summary, generate_ai_recommendations
 from sentiment import get_news_sentiment
 
 
@@ -54,32 +54,38 @@ def analyze_portfolio(request: PortfolioRequest):
     except Exception:
         ai_summary = "AI temporarily unavailable. Please try again later."
 
-    recommendations = []
+    try:
+        recommendations = generate_ai_recommendations(portfolio_results, risk_result)
+    except Exception:
+        recommendations = []
 
-    for stock in portfolio_results:
-        sentiment = stock.get("sentiment", {}).get("sentiment", "Neutral")
-        ticker = stock["ticker"]
+    if not recommendations:
+        recommendations = []
 
-        if sentiment == "Positive":
-            action = "BUY"
-            confidence = 75
-            reason = f"{ticker} has positive recent news sentiment."
-        elif sentiment == "Negative":
-            action = "SELL"
-            confidence = 70
-            reason = f"{ticker} has negative recent news sentiment."
-        else:
-            action = "HOLD"
-            confidence = 60
-            reason = f"{ticker} has neutral recent news sentiment."
+        for stock in portfolio_results:
+            sentiment = stock.get("sentiment", {}).get("sentiment", "Neutral")
+            ticker = stock["ticker"]
 
-        recommendations.append({
-            "symbol": ticker,
-            "action": action,
-            "confidence": confidence,
-            "reason": reason,
-            "priceTarget": "N/A",
-        })
+            if sentiment == "Positive":
+                action = "BUY"
+                confidence = 75
+                reason = f"{ticker} has positive recent news sentiment."
+            elif sentiment == "Negative":
+                action = "SELL"
+                confidence = 70
+                reason = f"{ticker} has negative recent news sentiment."
+            else:
+                action = "HOLD"
+                confidence = 60
+                reason = f"{ticker} has neutral recent news sentiment."
+
+            recommendations.append({
+                "symbol": ticker,
+                "action": action,
+                "confidence": confidence,
+                "reason": reason,
+                "priceTarget": "N/A",
+            })
 
     total_value = sum(stock["amount"] for stock in portfolio_results)
 
