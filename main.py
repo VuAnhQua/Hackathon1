@@ -1,18 +1,7 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
-from typing import List
 import yfinance as yf
 
 app = FastAPI()
-
-
-class PortfolioItem(BaseModel):
-    ticker: str
-    amount: float
-
-
-class PortfolioRequest(BaseModel):
-    portfolio: List[PortfolioItem]
 
 
 @app.get("/")
