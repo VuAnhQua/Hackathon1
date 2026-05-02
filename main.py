@@ -1,3 +1,5 @@
+import json
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -6,7 +8,6 @@ from market import get_stock_data
 from risk import calculate_risk
 from ai import generate_ai_summary, generate_ai_recommendations
 from sentiment import get_news_sentiment
-import json
 
 
 app = FastAPI()
@@ -88,7 +89,7 @@ def analyze_portfolio(request: PortfolioRequest):
                 "priceTarget": "N/A",
             })
 
-    total_value = sum(stock["amount"] for stock in portfolio_results)
+    total_value = sum(float(stock.get("amount", 0)) for stock in portfolio_results)
 
     dashboard = {
         "totalValue": total_value,
@@ -98,14 +99,14 @@ def analyze_portfolio(request: PortfolioRequest):
     }
 
     response_data = {
-    "portfolio": portfolio_results,
-    "risk": risk_result,
-    "dashboard": dashboard,
-    "recommendations": recommendations,
-    "ai_summary": ai_summary,
-}
+        "portfolio": portfolio_results,
+        "risk": risk_result,
+        "dashboard": dashboard,
+        "recommendations": recommendations,
+        "ai_summary": ai_summary,
+    }
 
-return json.loads(json.dumps(response_data, default=str))
+    return json.loads(json.dumps(response_data, default=str))
 
 
 @app.get("/stocks")
@@ -145,4 +146,5 @@ def get_single_stock(ticker: str):
 
 @app.get("/news/{ticker}")
 def get_news_for_ticker(ticker: str):
-    return get_news_sentiment(ticker)
+    news_data = get_news_sentiment(ticker)
+    return json.loads(json.dumps(news_data, default=str))
