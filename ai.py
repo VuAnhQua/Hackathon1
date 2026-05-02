@@ -84,4 +84,13 @@ Rules:
 """
 
     response = client.responses.create(
-        model="g
+        model="gpt-4.1-mini",
+        input=prompt,
+    )
+
+    text = response.output_text
+
+    try:
+        return json.loads(text)
+    except Exception:
+        return []
