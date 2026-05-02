@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from models import PortfolioRequest
 from market import get_stock_data
@@ -6,13 +7,15 @@ from risk import calculate_risk
 from ai import generate_ai_summary
 from sentiment import get_news_sentiment
 
+
 app = FastAPI()
+
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "http://127.0.0.1:5173"
+        "http://127.0.0.1:5173",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -29,7 +32,7 @@ def home():
 def health():
     return {
         "status": "ok",
-        "service": "wealth-management-backend"
+        "service": "wealth-management-backend",
     }
 
 
@@ -51,40 +54,40 @@ def analyze_portfolio(request: PortfolioRequest):
     except Exception:
         ai_summary = "AI temporarily unavailable."
 
-    total_value = sum(stock["amount"] for stock in portfolio_results)
-
     recommendations = []
 
     for stock in portfolio_results:
-    sentiment = stock.get("sentiment", {}).get("sentiment", "Neutral")
-    ticker = stock["ticker"]
+        sentiment = stock.get("sentiment", {}).get("sentiment", "Neutral")
+        ticker = stock["ticker"]
 
-    if sentiment == "Positive":
-        action = "BUY"
-        confidence = 75
-        reason = f"{ticker} has positive recent news sentiment."
-    elif sentiment == "Negative":
-        action = "SELL"
-        confidence = 70
-        reason = f"{ticker} has negative recent news sentiment."
-    else:
-        action = "HOLD"
-        confidence = 60
-        reason = f"{ticker} has neutral recent news sentiment."
+        if sentiment == "Positive":
+            action = "BUY"
+            confidence = 75
+            reason = f"{ticker} has positive recent news sentiment."
+        elif sentiment == "Negative":
+            action = "SELL"
+            confidence = 70
+            reason = f"{ticker} has negative recent news sentiment."
+        else:
+            action = "HOLD"
+            confidence = 60
+            reason = f"{ticker} has neutral recent news sentiment."
 
-    recommendations.append({
-        "symbol": ticker,
-        "action": action,
-        "confidence": confidence,
-        "reason": reason,
-        "priceTarget": "N/A"
-    })
+        recommendations.append({
+            "symbol": ticker,
+            "action": action,
+            "confidence": confidence,
+            "reason": reason,
+            "priceTarget": "N/A",
+        })
+
+    total_value = sum(stock["amount"] for stock in portfolio_results)
 
     dashboard = {
         "totalValue": total_value,
         "riskLevel": risk_result.get("risk_level"),
         "diversificationScore": risk_result.get("diversification_score"),
-        "sectorAllocation": risk_result.get("sector_allocation")
+        "sectorAllocation": risk_result.get("sector_allocation"),
     }
 
     return {
@@ -92,19 +95,29 @@ def analyze_portfolio(request: PortfolioRequest):
         "risk": risk_result,
         "dashboard": dashboard,
         "recommendations": recommendations,
-        "ai_summary": ai_summary
+        "ai_summary": ai_summary,
     }
 
 
 @app.get("/stocks")
 def get_stocks():
-    default_tickers = ["AAPL", "MSFT", "GOOGL", "NVDA", "TSLA", "AMZN", "META", "JPM"]
+    default_tickers = [
+        "AAPL",
+        "MSFT",
+        "GOOGL",
+        "NVDA",
+        "TSLA",
+        "AMZN",
+        "META",
+        "JPM",
+    ]
 
     results = []
 
     for ticker in default_tickers:
         stock_data = get_stock_data(ticker, 0)
         sentiment_data = get_news_sentiment(ticker)
+
         stock_data["sentiment"] = sentiment_data
         results.append(stock_data)
 
