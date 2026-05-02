@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import List
 
+
 class PortfolioItem(BaseModel):
     ticker: str
     amount: float
