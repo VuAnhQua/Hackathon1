@@ -23,7 +23,10 @@ def analyze_portfolio(request: PortfolioRequest):
 
     risk_result = calculate_risk(portfolio_results)
 
+    try:
     ai_summary = generate_ai_summary(portfolio_results, risk_result)
+    except Exception as e:
+    ai_summary = "AI temporarily unavailable due to API limits."
 
     return {
         "portfolio": portfolio_results,
