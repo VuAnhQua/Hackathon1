@@ -16,4 +16,5 @@ def get_stock_data(ticker_symbol: str, amount: float, PeriodRange="1mo", Interva
         "past_data": ticker.history(period=PeriodRange, interval=IntervalRange)
     }
 
-# You can get open, volume, high, low data. (Ex: get_stock_data("AAPL", 5, "3mo")["past_data"]["Open"])
+# You can get open, volume, high, low data. (Ex: get_stock_data("AAPL", 5, "3mo").get("past_data").get("Open") -> Series)
+# print(type(get_stock_data("AAPL", 5, "3mo").get("past_data").get("Open")).__name__)
