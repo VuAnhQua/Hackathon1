@@ -1,6 +1,8 @@
 import os
+import json
 from dotenv import load_dotenv
 from openai import OpenAI
+
 
 load_dotenv()
 
@@ -40,3 +42,46 @@ Use simple language. Do not use complex financial jargon.
     )
 
     return response.output_text
+
+
+def generate_ai_recommendations(portfolio, risk):
+    if not api_key:
+        return []
+
+    prompt = f"""
+You are an AI portfolio recommendation engine for a beginner-friendly wealth management app.
+
+Analyze this portfolio and create smart stock recommendations.
+
+Portfolio:
+{portfolio}
+
+Risk:
+{risk}
+
+Return ONLY valid JSON.
+No markdown.
+No explanation outside JSON.
+
+Return this exact structure:
+[
+  {{
+    "symbol": "AAPL",
+    "action": "BUY",
+    "confidence": 78,
+    "reason": "Short beginner-friendly explanation.",
+    "priceTarget": "N/A"
+  }}
+]
+
+Rules:
+- action must be one of: BUY, SELL, HOLD
+- confidence must be a number from 1 to 100
+- reason should be simple and specific
+- use risk, sector concentration, and sentiment if available
+- do not give financial advice guarantees
+- keep each reason under 25 words
+"""
+
+    response = client.responses.create(
+        model="g
