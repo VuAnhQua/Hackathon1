@@ -6,6 +6,7 @@ from market import get_stock_data
 from risk import calculate_risk
 from ai import generate_ai_summary, generate_ai_recommendations
 from sentiment import get_news_sentiment
+import json
 
 
 app = FastAPI()
@@ -96,13 +97,15 @@ def analyze_portfolio(request: PortfolioRequest):
         "sectorAllocation": risk_result.get("sector_allocation"),
     }
 
-    return {
-        "portfolio": portfolio_results,
-        "risk": risk_result,
-        "dashboard": dashboard,
-        "recommendations": recommendations,
-        "ai_summary": ai_summary,
-    }
+    response_data = {
+    "portfolio": portfolio_results,
+    "risk": risk_result,
+    "dashboard": dashboard,
+    "recommendations": recommendations,
+    "ai_summary": ai_summary,
+}
+
+return json.loads(json.dumps(response_data, default=str))
 
 
 @app.get("/stocks")
@@ -127,7 +130,7 @@ def get_stocks():
         stock_data["sentiment"] = sentiment_data
         results.append(stock_data)
 
-    return results
+    return json.loads(json.dumps(results, default=str))
 
 
 @app.get("/stock/{ticker}")
@@ -137,7 +140,7 @@ def get_single_stock(ticker: str):
 
     stock_data["sentiment"] = sentiment_data
 
-    return stock_data
+    return json.loads(json.dumps(stock_data, default=str))
 
 
 @app.get("/news/{ticker}")
