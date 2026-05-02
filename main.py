@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from models import PortfolioRequest
 from market import get_stock_data
 from risk import calculate_risk
+from ai import generate_ai_summary
 
 app = FastAPI()
 
@@ -22,7 +23,10 @@ def analyze_portfolio(request: PortfolioRequest):
 
     risk_result = calculate_risk(portfolio_results)
 
+    ai_summary = generate_ai_summary(portfolio_results, risk_result)
+
     return {
         "portfolio": portfolio_results,
-        "risk": risk_result
+        "risk": risk_result,
+        "ai_summary": ai_summary
     }
