@@ -51,8 +51,8 @@ def analyze_portfolio(request: PortfolioRequest):
 
     try:
         ai_summary = generate_ai_summary(portfolio_results, risk_result)
-    except Exception as e:
-        ai_summary = f"AI error: {str(e)}"
+    except Exception:
+        ai_summary = "AI temporarily unavailable. Please try again later."
 
     recommendations = []
 
